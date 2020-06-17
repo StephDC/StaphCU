@@ -43,14 +43,11 @@ def cu(db,item):
         return None
 
 def processItem(item,db,api):
-    print(item)
     cmdList = ('/ping','/fakeuser','/genuineuser','/authenticuser','/checkuser','/promote','/unlistuser')
     if 'message' in item:
         if 'text' in item['message'] and len(item['message']['text']) > 1 and item['message']['text'][0] == '/':
             hasToReply = False
             stripText = item['message']['text'].split('\n',1)[0].split(' ',1)[0]
-            print(stripText)
-            print(len(stripText) > len(api.info['username']),stripText[-len(api.info['username'])-1:],'@'+api.info['username'])
             if len(stripText) > len(api.info['username']) and stripText[-len(api.info['username'])-1:] == '@'+api.info['username']:
                 hasToReply = True
                 stripText = stripText[:-len(api.info['username'])-1]
@@ -78,10 +75,10 @@ def processItem(item,db,api):
                     else:
                         api.sendMessage(item['message']['chat']['id'],'抱歉，只有濫權管理員才可以將用戶標記為'+('可信','仿冒')[stripText == '/fakeuser']+'用戶。',{'reply_to_message_id':item['message']['message_id']})
                 elif stripText == '/checkuser':
-                    if len(item['message']['text'].split(' ', 1)) == 1:
+                    if len(item['message']['text'].split(' ', 1)) == 1 or not item['message']['text'].split(' ',1)[1].isdigit():
                         target = item['message']['reply_to_message']['forward_from'] if ('reply_to_message' in item['message'] and 'forward_from' in item['message']['reply_to_message']) else item['message']['reply_to_message']['from'] if 'reply_to_message' in item['message'] else item['message']['from']
                     else:
-                        target = item['message']['text'].split(' ', 1)[1]
+                        target = {'id':item['message']['text'].split(' ', 1)[1],'username':item['message']['text'].split(' ', 1)[1]}
                     result = cu(db,str(target['id']))
                     if result is None:
                         result = '我並沒有關於用戶 '+tg.getNameRep(target) +' 的記錄。'
