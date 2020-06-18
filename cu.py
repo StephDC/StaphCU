@@ -70,6 +70,8 @@ def processItem(item,db,api):
                             if t is None:
                                 db[('blanc','noir')[stripText=='/fakeuser']].addItem((tmp[1],str(int(time.time())),reason))
                                 api.sendMessage(item['message']['chat']['id'],'UID 為 <a href="tg://user?id='+tmp[1]+'">'+tmp[1]+'</a> 的用戶已被成功加入'+('可信','仿冒')[stripText=='/fakeuser']+'用戶列表。',{'reply_to_message_id':item['message']['message_id']})
+                                if stripText == '/fakeuser' and 'notifyGroup' in botconfig.__dict__ and botconfig.notifyGroup:
+                                    api.sendMessage(botconfig.notifyGroup,'<a href="tg://user?id='+tmp[1]+'">仿冒用戶</a>\nUID: <pre>'+tmp[1]+'</pre>\n'+tg.tgapi.escape(reason))
                             else:
                                 api.sendMessage(item['message']['chat']['id'],'注意：UID 為 <a href="tg://user?id='+tmp[1]+'">'+tmp[1]+'</a> 的用戶已被標記為'+{'super':'超級管理','admin':'管理','noir':'仿冒','blanc':'可信'}[t['status']]+'用戶。如需修改，請先撤銷標記。',{'reply_to_message_id':item['message']['message_id']})
                     else:
@@ -106,6 +108,8 @@ def processItem(item,db,api):
                                 else:
                                     db[tmp['status']].remItem(str(item['message']['reply_to_message']['from']['id']))
                                     api.sendMessage(item['message']['chat']['id'],'用戶 '+tg.getNameRep(item['message']['reply_to_message']['from'])+' 已自動從'+{'admin':'管理','noir':'仿冒','blanc':'可信'}[tmp['status']]+'用戶列表中移除。',{'reply_to_message_id':item['message']['message_id']})
+                                    if tmp['status'] == 'noir' and 'notifyGroup' in botconfig.__dict__ and botconfig.notifyGroup:
+                                        api.sendMessage(botconfig.notifyGroup,'<a href="tg://user?id='+u+'">前仿冒用戶</a>\nUID: <pre>'+u+'</pre>\n已自動從仿冒用戶列表中移除。')
                             db['admin'].addItem((str(item['message']['reply_to_message']['from']['id']),str(int(time.time())),flags))
                             api.sendMessage(item['message']['chat']['id'],'用戶 '+tg.getNameRep(item['message']['reply_to_message']['from'])+' 已成功成為濫權管理員。',{'reply_to_message_id':item['message']['message_id']})
                         else:
@@ -127,6 +131,8 @@ def processItem(item,db,api):
                             elif tmp['status'] in ('noir','blanc') or (tmp['status'] == 'admin' and (item['message']['from']['id'] in botconfig.superAdmin or 'op' in db['admin'].getItem(str(item['message']['from']['id'] in botconfig.superAdmin),'flag').split('|'))):
                                 db[tmp['status']].remItem(u)
                                 api.sendMessage(item['message']['chat']['id'],'用戶 <a href="tg://user?id='+u+'">'+u+'</a> 已從'+{'admin':'濫權管理','noir':'仿冒','blanc':'可信'}[tmp['status']]+'用戶列表中移除。',{'reply_to_message_id':item['message']['message_id']})
+                                if tmp['status'] == 'noir' and 'notifyGroup' in botconfig.__dict__ and botconfig.notifyGroup:
+                                    api.sendMessage(botconfig.notifyGroup,'<a href="tg://user?id='+u+'">前仿冒用戶</a>\nUID: <pre>'+u+'</pre>\n已從仿冒用戶列表移除。')
                             else:
                                 api.sendMessage(item['message']['chat']['id'],'濫權管理員 <a href="tg://user?id='+tmp+'">'+tmp+'</a> 的權力不容你的侵犯！你的請求被濫權掉了。',{'reply_to_message_id':item['message']['message_id']})
                     else:

@@ -5,6 +5,7 @@
 apiKey = '123456789:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
 db = 'init.db'
 superAdmin = (123456789,)
+notifyGroup = 123456789
 
 if __name__ == '__main__':
     print('DO NOT EXECUTE ME!')
