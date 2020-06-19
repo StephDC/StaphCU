@@ -144,7 +144,7 @@ def processItem(item,db,api):
                 api.sendMessage(item['message']['chat']['id'],'請問您對我有什麼奇怪的期待嗎？',{'reply_to_message_id':item['message']['message_id']})
         elif db['noir'].hasItem(str(item['message']['from']['id'])):
             if canPunish(api,item['message']['chat']['id']):
-                api.query('kickChatMember',{'chat_id':item['message']['chat']['id'],'user_id':newMember['id'],'until_date':int(time.time()+10)})
+                api.query('kickChatMember',{'chat_id':item['message']['chat']['id'],'user_id':item['message']['from']['id'],'until_date':int(time.time()+10)})
                 api.query('deleteMessage',{'chat_id':item['message']['chat']['id'],'message_id':item['message']['message_id']})
                 api.sendMessage(item['message']['chat']['id'],'用戶 '+tg.getNameRep(item['message']['from'])+' 已於 '+datetime.datetime.fromtimestamp(int(db['noir'].getItem(str(item['message']['from']['id']),'date'))).isoformat()+' 被標記為仿冒用戶。該用戶已被自動踢出。')
             else:
