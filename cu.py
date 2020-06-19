@@ -87,9 +87,9 @@ def processItem(item,db,api):
                     elif result['status'] == 'super':
                         result = '用戶 '+tg.getNameRep(target)+' 是尊貴的超級濫權管理員。'
                     elif result['status'] == 'admin':
-                        result = '用戶 '+tg.getNameRep(target)+' 於 '+datetime.datetime.fromtimestamp(result['time']).isoformat()+' 成為濫權管理員。'
+                        result = '用戶 '+tg.getNameRep(target)+' 於 '+datetime.datetime.fromtimestamp(result['time']).isoformat()+'Z 成為濫權管理員。'
                     else:
-                        result = '用戶 '+tg.getNameRep(target)+' 於 '+datetime.datetime.fromtimestamp(result['time']).isoformat()+' 被標記為'+('可信','仿冒')[result['status'] == 'noir']+'用戶。備註：'+tg.tgapi.escape(result['comment'])
+                        result = '用戶 '+tg.getNameRep(target)+' 於 '+datetime.datetime.fromtimestamp(result['time']).isoformat()+'Z 被標記為'+('可信','仿冒')[result['status'] == 'noir']+'用戶。備註：'+tg.tgapi.escape(result['comment'])
                     api.sendMessage(item['message']['chat']['id'],result,{'reply_to_message_id':item['message']['message_id']})
                 elif stripText == '/promote':
                     if item['message']['from']['id'] in botconfig.superAdmin or (db['admin'].hasItem(str(item['message']['from']['id'])) and 'op' in db['admin'].getItem(str(item['message']['from']['id']),'flag').split('|')):
@@ -146,7 +146,7 @@ def processItem(item,db,api):
             if canPunish(api,item['message']['chat']['id']):
                 api.query('kickChatMember',{'chat_id':item['message']['chat']['id'],'user_id':item['message']['from']['id'],'until_date':int(time.time()+10)})
                 api.query('deleteMessage',{'chat_id':item['message']['chat']['id'],'message_id':item['message']['message_id']})
-                api.sendMessage(item['message']['chat']['id'],'用戶 '+tg.getNameRep(item['message']['from'])+' 已於 '+datetime.datetime.fromtimestamp(int(db['noir'].getItem(str(item['message']['from']['id']),'date'))).isoformat()+' 被標記為仿冒用戶。該用戶已被自動踢出。')
+                api.sendMessage(item['message']['chat']['id'],'用戶 '+tg.getNameRep(item['message']['from'])+' 已於 '+datetime.datetime.fromtimestamp(int(db['noir'].getItem(str(item['message']['from']['id']),'date'))).isoformat()+'Z 被標記為仿冒用戶。該用戶已被自動踢出。')
             else:
                 api.sendMessage(item['message']['chat']['id'],'該用戶（'+tg.getNameRep(item['message']['from'])+'）已被標記為仿冒用戶，請各位注意。',{'reply_to_message_id':item['message']['message_id']})
         elif 'new_chat_members' in item['message'] and item['message']['chat']['type'] in ('group','supergroup'):
@@ -158,9 +158,9 @@ def processItem(item,db,api):
                 elif db['noir'].hasItem(newMember['id']):
                     if canPunish(api,item['message']['chat']['id']):
                         api.query('kickChatMember',{'chat_id':item['message']['chat']['id'],'user_id':newMember['id'],'until_date':int(time.time()+10)})
-                        api.sendMessage(item['message']['chat']['id'],'新入群用戶 '+tg.getNameRep(newMember)+' 已於 '+datetime.datetime.fromtimestamp(int(db['noir'].getItem(str(newMember['id']),'date'))).isoformat()+' 被標記為仿冒用戶。該用戶已被自動踢出。')
+                        api.sendMessage(item['message']['chat']['id'],'新入群用戶 '+tg.getNameRep(newMember)+' 已於 '+datetime.datetime.fromtimestamp(int(db['noir'].getItem(str(newMember['id']),'date'))).isoformat()+'Z 被標記為仿冒用戶。該用戶已被自動踢出。')
                     else:
-                        api.sendMessage(item['message']['chat']['id'],'新入群用戶 '+tg.getNameRep(newMember)+' 已於 '+datetime.datetime.fromtimestamp(int(db['noir'].getItem(str(newMember['id']),'date'))).isoformat()+' 被標記為仿冒用戶，請各位注意。')
+                        api.sendMessage(item['message']['chat']['id'],'新入群用戶 '+tg.getNameRep(newMember)+' 已於 '+datetime.datetime.fromtimestamp(int(db['noir'].getItem(str(newMember['id']),'date'))).isoformat()+'Z 被標記為仿冒用戶，請各位注意。')
 
 def run(db,api):
     batch = api.query('getUpdates')
