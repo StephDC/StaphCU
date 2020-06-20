@@ -1,12 +1,13 @@
 #! /usr/bin/env python3
 
+import json
+import os
+import sys
+import threading
+import time
 import urllib.error as ue
 import urllib.request as ur
 import urllib.parse as up
-import json
-import time
-import sys
-import os
 
 __version__ = '0.1'
 __doc__ = '''StaphMB - A Telegram Group Management Bot infected by _S. aureus_
@@ -40,6 +41,7 @@ class tgapi:
         self.target = 'https://api.telegram.org/bot'+apikey+'/'
         self.retry = maxRetry
         self.info = self.query('getMe')
+        self.fork = []
         if self.info is None:
             raise APIError('API', 'Initialization Self-test Failed')
         self.logOut.writeln("Bot "+self.info["username"]+" connected to the Telegram API.")
@@ -50,7 +52,6 @@ class tgapi:
         if parameter is not None:
             req.add_header('Content-Type','application/json')
             req.data = json.dumps(parameter).encode('UTF-8')
-        #            print(req.data.decode('UTF-8'))
         retryCount = 0
         maxRetry = retry if retry is not None else self.retry
         failed = True
@@ -71,8 +72,27 @@ class tgapi:
             time.sleep(5)
             retryCount += 1
         data = json.loads(resp.read().decode('UTF-8'))
-        #print(data)
         return data['result'] if data['ok'] else None
+
+    def dQuery(self,delay,met,parameter=None,retry=None):
+        time.sleep(delay)
+        return self.query(met,parameter,retry)
+
+    def delayQuery(self,delay,met,parameter=None,retry=None):
+        t = threading.Thread(target=dQuery,args=(delay,met,parameter,retry))
+        t.start()
+        self.fork.append(t)
+
+    def clearFork(self):
+        'clearFork - join all forks that has completed'
+        result = 0
+        for item in self.fork:
+            if item.is_alive():
+                result += 1
+            else:
+                item.join()
+                self.fork.remove(item)
+        return result
     
     def sendMessage(self,target,text,misc={}):
         misc['text'] = text
