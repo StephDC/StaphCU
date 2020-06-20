@@ -29,11 +29,14 @@ def canSpeak(api,gid):
     except tg.APIError:
         return False
 
-def checkGroup(api,db,group,member,origMsg,ingroup=lambda a,b,c,d:True,outgroup=lambda a,b,c,d:True,finalMsg=None,af=0.5):
+def checkGroup(api,dbinfo,group,member,origMsg,ingroup=lambda a,b,c,d:True,outgroup=lambda a,b,c,d:True,finalMsg=None,af=0.5):
     '''checkGroup - Check if a user is in any of the groups specified in group
     If user is in a group, execute ingroup
     Else, execute outgroup
     API Format: {in,out}group(api,db,gid,uid)'''
+    db = {dbinfo['tName'][0]:sqldb.sqliteDB(dbinfo['fName'],dbinfo['tName'][0])}
+    for i in dbinfo['tName'][1:]:
+        db[i] = sqldb.sqliteDB(db[dbinfo['tName'][0]],i)
     api.query('sendChatAction',{'chat_id':origMsg['chat']['id'],'action':'typing'})
     ct = time.time()
     for item in group:
@@ -178,7 +181,7 @@ def processItem(item,db,api):
                         api.sendMessage(item['message']['chat']['id'],'抱歉，只有濫權管理員才可以移除用戶標記。',{'reply_to_message_id':item['message']['message_id']})
                 elif stripText == '/cleargroup':
                     if item['message']['from']['id'] in botconfig.superAdmin or db['admin'].hasItem(str(item['message']['from']['id'])):
-                        t = tg.threading.Thread(target=checkGroup,args=(api,db,db['group'].keys(),api.info['id']),kwargs={'origMsg':item['message'],'outgroup':clearGroup,'finalMsg':'已完成清理群組。'})
+                        t = tg.threading.Thread(target=checkGroup,args=(api,{'fName':db['config'].filename,'tName':('group',)},db['group'].keys(),api.info['id']),kwargs={'origMsg':item['message'],'outgroup':clearGroup,'finalMsg':'已完成清理群組。'})
                         t.start()
                         api.fork.append(t)
                     else:
