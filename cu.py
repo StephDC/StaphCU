@@ -34,9 +34,12 @@ def checkGroup(api,dbinfo,group,member,origMsg,ingroup=lambda a,b,c,d:True,outgr
     If user is in a group, execute ingroup
     Else, execute outgroup
     API Format: {in,out}group(api,db,gid,uid)'''
-    db = {dbinfo['tName'][0]:sqldb.sqliteDB(dbinfo['fName'],dbinfo['tName'][0])}
-    for i in dbinfo['tName'][1:]:
-        db[i] = sqldb.sqliteDB(db[dbinfo['tName'][0]],i)
+    if dbinfo is not None:
+        db = {dbinfo['tName'][0]:sqldb.sqliteDB(dbinfo['fName'],dbinfo['tName'][0])}
+        for i in dbinfo['tName'][1:]:
+            db[i] = sqldb.sqliteDB(db[dbinfo['tName'][0]],i)
+    else:
+        db = None
     api.query('sendChatAction',{'chat_id':origMsg['chat']['id'],'action':'typing'})
     ct = time.time()
     for item in group:
@@ -45,7 +48,7 @@ def checkGroup(api,dbinfo,group,member,origMsg,ingroup=lambda a,b,c,d:True,outgr
             if data['status'] in ('kicked','left','restricted'):
                 outgroup(api,db,item,member)
             else:
-                ingroup(api,db,item,member)
+                ingroup(api,db,item,data)
         except tg.APIError:
             outgroup(api,db,item,member)
         time.sleep(af)
@@ -61,9 +64,17 @@ def clearGroup(a,d,g,u):
         d['group'].remItem(g)
         print('Automatically removing group '+str(g)+' from group list.')
     try:
-        api.query('leaveChat',{'chat_id':g},retry=0)
+        a.query('leaveChat',{'chat_id':g},retry=0)
     except tg.APIError:
         pass
+
+def gbbUser(a,d,g,u):
+    'gbbUser - used by checkGroup'
+    try:
+        api.query('kickChatMember',{'chat_id':g,'user_id':u['user']['id'],'until_date':int(time.time()+10)})
+        api.sendMessage(g,'用戶 '+tg.getNameRep(u['user'])+' 已於 '+datetime.datetime.fromtimestamp(int(db['noir'].getItem(str(item['message']['from']['id']),'date'))).isoformat()+'Z 被標記為仿冒用戶。該用戶已被自動踢出。')
+    except tg.APIError:
+        api.sendMessage(g,'注意：用戶 '+tg.getNameRep(u['user'])+' 已於 '+datetime.datetime.fromtimestamp(int(db['noir'].getItem(str(item['message']['from']['id']),'date'))).isoformat()+'Z 被標記為仿冒用戶。')
 
 def cu(db,item):
     result = {}
@@ -112,6 +123,10 @@ def processItem(item,db,api):
                             if t is None:
                                 db[('blanc','noir')[stripText=='/fakeuser']].addItem((tmp[1],str(int(time.time())),reason))
                                 api.sendMessage(item['message']['chat']['id'],'UID 為 <pre>'+tmp[1]+'</pre> 的<a href="tg://user?id='+tmp[1]+'">用戶</a>已被成功加入'+('可信','仿冒')[stripText=='/fakeuser']+'用戶列表。',{'reply_to_message_id':item['message']['message_id']})
+                                if stripText == '/fakeuser':
+                                    t = tg.threading.Thread(target=checkGroup,args=(api,None,db['group'].keys(),api.info['id']),kwargs={'origMsg':item['message'],'ingroup':gbbUser,'finalMsg':'已完成全域通知或封禁。'})
+                                    t.start()
+                                    api.fork.append(t)
                                 if stripText == '/fakeuser' and 'notifyGroup' in botconfig.__dict__ and botconfig.notifyGroup:
                                     api.sendMessage(botconfig.notifyGroup,'<a href="tg://user?id='+tmp[1]+'">仿冒用戶</a>\nUID: <pre>'+tmp[1]+'</pre>\n'+tg.tgapi.escape(reason))
                             else:
@@ -209,8 +224,11 @@ def processItem(item,db,api):
                     db['group'].addItem((str(item['message']['chat']['id']),str(int(time.time()))))
                 elif db['noir'].hasItem(newMember['id']):
                     if canPunish(api,item['message']['chat']['id']):
-                        api.query('kickChatMember',{'chat_id':item['message']['chat']['id'],'user_id':newMember['id'],'until_date':int(time.time()+10)})
-                        api.sendMessage(item['message']['chat']['id'],'新入群用戶 '+tg.getNameRep(newMember)+' 已於 '+datetime.datetime.fromtimestamp(int(db['noir'].getItem(str(newMember['id']),'date'))).isoformat()+'Z 被標記為仿冒用戶。該用戶已被自動踢出。')
+                        try:
+                            api.query('kickChatMember',{'chat_id':item['message']['chat']['id'],'user_id':newMember['id'],'until_date':int(time.time()+10)})
+                            api.sendMessage(item['message']['chat']['id'],'新入群用戶 '+tg.getNameRep(newMember)+' 已於 '+datetime.datetime.fromtimestamp(int(db['noir'].getItem(str(newMember['id']),'date'))).isoformat()+'Z 被標記為仿冒用戶。該用戶已被自動踢出。')
+                        except api.APIError:
+                            api.sendMessage(item['message']['chat']['id'],'新入群用戶 '+tg.getNameRep(newMember)+' 已於 '+datetime.datetime.fromtimestamp(int(db['noir'].getItem(str(newMember['id']),'date'))).isoformat()+'Z 被標記為仿冒用戶，請各位注意。')
                     else:
                         api.sendMessage(item['message']['chat']['id'],'新入群用戶 '+tg.getNameRep(newMember)+' 已於 '+datetime.datetime.fromtimestamp(int(db['noir'].getItem(str(newMember['id']),'date'))).isoformat()+'Z 被標記為仿冒用戶，請各位注意。')
         elif 'left_chat_member' in item['message'] and item['message']['left_chat_member']['id'] == api.info['id']:
