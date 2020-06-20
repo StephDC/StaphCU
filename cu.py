@@ -108,7 +108,7 @@ def processItem(item,db,api):
             if stripText in cmdList:
                 ## Start processing commands
                 if stripText == '/ping':
-                    api.sendMessage(item['message']['chat']['id'],'Hell o\'world! It took me '+str(time.time()-item['message']['date'])[:9]+' seconds to receive your message.',{'reply_to_message_id':item['message']['message_id']})
+                    api.sendMessage(item['message']['chat']['id'],'Hell o\'world! It took me '+str(time.time()-item['message']['date'])[:9]+' seconds to receive your message. Current thread count: '+str(api.clearFork()),{'reply_to_message_id':item['message']['message_id']})
                 elif stripText in ('/fakeuser','/genuineuser','/authenticuser'):
                     if db['admin'].hasItem(str(item['message']['from']['id'])) or item['message']['from']['id'] in botconfig.superAdmin:
                         tmp = item['message']['text'].split('\n',1)
