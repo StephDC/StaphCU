@@ -76,7 +76,7 @@ def cu(db,item):
         return None
 
 def processItem(item,db,api):
-    cmdList = ('/ping','/fakeuser','/genuineuser','/authenticuser','/checkuser','/promote','/unlistuser')
+    cmdList = ('/ping','/fakeuser','/genuineuser','/authenticuser','/checkuser','/promote','/unlistuser','/cleargroup')
     if 'message' in item:
         if item['message']['chat']['type'] in ('group','supergroup') and not db['group'].hasItem(str(item['message']['chat']['id'])):
             if canSpeak(api,str(item['message']['chat']['id'])):
