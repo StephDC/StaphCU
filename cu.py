@@ -71,10 +71,10 @@ def clearGroup(a,d,g,u):
 def gbbUser(a,d,g,u):
     'gbbUser - used by checkGroup'
     try:
-        api.query('kickChatMember',{'chat_id':g,'user_id':u['user']['id'],'until_date':int(time.time()+10)})
-        api.sendMessage(g,'用戶 '+tg.getNameRep(u['user'])+' 已於 '+datetime.datetime.fromtimestamp(int(db['noir'].getItem(str(item['message']['from']['id']),'date'))).isoformat()+'Z 被標記為仿冒用戶。該用戶已被自動踢出。')
+        a.query('kickChatMember',{'chat_id':g,'user_id':u['user']['id'],'until_date':int(time.time()+10)},retry=0)
+        a.sendMessage(g,'用戶 '+tg.getNameRep(u['user'])+' 已於剛剛被標記為仿冒用戶。該用戶已被自動踢出。')
     except tg.APIError:
-        api.sendMessage(g,'注意：用戶 '+tg.getNameRep(u['user'])+' 已於 '+datetime.datetime.fromtimestamp(int(db['noir'].getItem(str(item['message']['from']['id']),'date'))).isoformat()+'Z 被標記為仿冒用戶。')
+        a.sendMessage(g,'注意：用戶 '+tg.getNameRep(u['user'])+' 已於剛剛被標記為仿冒用戶。')
 
 def cu(db,item):
     result = {}
@@ -124,7 +124,7 @@ def processItem(item,db,api):
                                 db[('blanc','noir')[stripText=='/fakeuser']].addItem((tmp[1],str(int(time.time())),reason))
                                 api.sendMessage(item['message']['chat']['id'],'UID 為 <pre>'+tmp[1]+'</pre> 的<a href="tg://user?id='+tmp[1]+'">用戶</a>已被成功加入'+('可信','仿冒')[stripText=='/fakeuser']+'用戶列表。',{'reply_to_message_id':item['message']['message_id']})
                                 if stripText == '/fakeuser':
-                                    t = tg.threading.Thread(target=checkGroup,args=(api,None,db['group'].keys(),api.info['id']),kwargs={'origMsg':item['message'],'ingroup':gbbUser,'finalMsg':'已完成全域通知或封禁。'})
+                                    t = tg.threading.Thread(target=checkGroup,args=(api,{'fName':db['config'].filename,'tName':('noir',)},db['group'].keys(),tmp[1]),kwargs={'origMsg':item['message'],'ingroup':gbbUser,'finalMsg':'已完成全域通知或封禁。'})
                                     t.start()
                                     api.fork.append(t)
                                 if stripText == '/fakeuser' and 'notifyGroup' in botconfig.__dict__ and botconfig.notifyGroup:
