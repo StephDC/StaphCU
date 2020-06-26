@@ -185,7 +185,7 @@ def processItem(item,db,api):
                                 api.sendMessage(item['message']['chat']['id'],'抱歉，我並沒有關於<a href="tg://user?id='+u+'">該用戶</a> (<pre>'+u+'</pre>) 的記錄。',{'reply_to_message_id':item['message']['message_id']})
                             elif tmp['status'] == 'super':
                                 api.sendMessage(item['message']['chat']['id'],'<a href="tg://user?id='+u+'">超級濫權管理員</a> (<pre>'+u+'</pre>) 的權力不容侵犯！你的請求被濫權掉了。',{'reply_to_message_id':item['message']['message_id']})
-                            elif tmp['status'] in ('noir','blanc') or (tmp['status'] == 'admin' and (item['message']['from']['id'] in botconfig.superAdmin or 'op' in db['admin'].getItem(str(item['message']['from']['id'] in botconfig.superAdmin),'flag').split('|'))):
+                            elif tmp['status'] in ('noir','blanc') or (tmp['status'] == 'admin' and (item['message']['from']['id'] in botconfig.superAdmin or 'op' in db['admin'].getItem(str(item['message']['from']['id']),'flag').split('|'))):
                                 db[tmp['status']].remItem(u)
                                 api.sendMessage(item['message']['chat']['id'],'<a href="tg://user?id='+u+'">用戶</a> (<pre>'+u+'</pre>) 已從'+{'admin':'濫權管理','noir':'仿冒','blanc':'可信'}[tmp['status']]+'用戶列表中移除。',{'reply_to_message_id':item['message']['message_id']})
                                 if tmp['status'] == 'noir' and 'notifyGroup' in botconfig.__dict__ and botconfig.notifyGroup:
