@@ -90,7 +90,7 @@ def cu(db,item):
         return None
 
 def processItem(item,db,api):
-    cmdList = ('/ping','/fakeuser','/genuineuser','/authenticuser','/checkuser','/promote','/unlistuser','/cleargroup')
+    cmdList = ('/ping','/fakeuser','/genuineuser','/authenticuser','/checkuser','/promote','/unlistuser','/cleargroup','/listadmin')
     if 'message' in item:
         if item['message']['chat']['type'] in ('group','supergroup') and not db['group'].hasItem(str(item['message']['chat']['id'])):
             if canSpeak(api,str(item['message']['chat']['id'])):
@@ -194,6 +194,21 @@ def processItem(item,db,api):
                                 api.sendMessage(item['message']['chat']['id'],'<a href="tg://user?id='+tmp+'">濫權管理員</a> (<pre>'+tmp+'</pre>) 的權力不容你的侵犯！你的請求被濫權掉了。',{'reply_to_message_id':item['message']['message_id']})
                     else:
                         api.sendMessage(item['message']['chat']['id'],'抱歉，只有濫權管理員才可以移除用戶標記。',{'reply_to_message_id':item['message']['message_id']})
+                elif stripText == '/listadmin':
+                    if item['message']['from']['id'] in botconfig.superAdmin or db['admin'].hasItem(str(item['message']['from']['id'])):
+                        data = "當前管理員列表\n"
+                        for a in db['admin']:
+                            try:
+                                tmp = tg.getNameRep(api.query('getChatMember',{'chat_id':item['message']['chat']['id'],'user_id':a})['user'])
+                            except tg.APIError:
+                                tmp = '<a href="tg://user?id='+a+'">管理員</a>'
+                            flagTrans = {'op':'行政員','tmp':'臨時'}
+                            tmp += '('+a+')；權限標誌：'+('無' if db['admin'].getItem(a,'flag') == '' else '，'.join([flagTrans[c] for c in db['admin'].getItem(a,'flag').split('|')]))
+                            data += tmp+'\n'
+                            time.sleep(0.5)
+                        api.sendMessage(item['message']['chat']['id'],data,{'reply_to_message_id':item['message']['message_id']})
+                    else:
+                        api.sendMessage(item['message']['chat']['id'],'抱歉，只有濫權管理員才可以列出所有濫權管理員。',{'reply_to_message_id':item['message']['message_id']})
                 elif stripText == '/cleargroup':
                     if item['message']['from']['id'] in botconfig.superAdmin or db['admin'].hasItem(str(item['message']['from']['id'])):
                         t = tg.threading.Thread(target=checkGroup,args=(api,{'fName':db['config'].filename,'tName':('group',)},db['group'].keys(),api.info['id']),kwargs={'origMsg':item['message'],'outgroup':clearGroup,'finalMsg':'已完成清理群組。'})
