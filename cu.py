@@ -19,12 +19,12 @@ def csprng(checkdup=lambda x: True,maxtrial=5):
     return False
 
 def canPunish(api,gid):
-    tmp = api.query('getChatMember',{'chat_id':gid,'user_id':api.info['id']})
+    tmp = api.query('getChatMember',{'chat_id':gid,'user_id':api.info['id']},retry=0)
     return tmp['status'] == 'creator' or ('can_restrict_members' in tmp and tmp['can_restrict_members'] and 'can_delete_messages' in tmp and tmp['can_delete_messages'])
 
 def canSpeak(api,gid):
     try:
-        tmp = api.query('getChatMember',{'chat_id':gid,'user_id':api.info['id']})
+        tmp = api.query('getChatMember',{'chat_id':gid,'user_id':api.info['id']},retry=0)
         return tmp['status'] in ('creator','administrator','member') or (tmp['status'] == 'restricted' and 'can_send_messages' in tmp and tmp['can_send_messages'])
     except tg.APIError:
         return False
@@ -198,9 +198,12 @@ def processItem(item,db,api):
                     if item['message']['from']['id'] in botconfig.superAdmin or db['admin'].hasItem(str(item['message']['from']['id'])):
                         data = "當前管理員列表\n"
                         for a in db['admin']:
-                            try:
-                                tmp = tg.getNameRep(api.query('getChatMember',{'chat_id':item['message']['chat']['id'],'user_id':a})['user'])
-                            except tg.APIError:
+                            if item['message']['chat']['type'] in ('group','supergroup'):
+                                try:
+                                    tmp = tg.getNameRep(api.query('getChatMember',{'chat_id':item['message']['chat']['id'],'user_id':a})['user'],retry=0)
+                                except tg.APIError:
+                                    tmp = '<a href="tg://user?id='+a+'">管理員</a>'
+                            else:
                                 tmp = '<a href="tg://user?id='+a+'">管理員</a>'
                             flagTrans = {'op':'行政員','tmp':'臨時'}
                             tmp += '('+a+')；權限標誌：'+('無' if db['admin'].getItem(a,'flag') == '' else '，'.join([flagTrans[c] for c in db['admin'].getItem(a,'flag').split('|')]))
