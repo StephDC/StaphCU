@@ -52,7 +52,7 @@ class cgiFBargv():
         return tmp
 
 def printCU(cudata,f):
-    toName = {'noir':'Fake','blanc':'Authentic','admin':'Admin','super':'SuperAdmin'}
+    toName = {'noir':'Fake','blanc':'Authentic','admin':'Admin','super':'SuperAdmin','unknown':'Unknown'}
     cudata['status'] = toName[cudata['status']]
     if f is None or f == 'text':
         print('Content-Type: text/plain; charset=UTF-8')
@@ -97,7 +97,7 @@ def checkUser(stdin):
             for item in ('noir','blanc','admin'):
                 if db[item].hasItem(cuid):
                     result['status'] = item
-                    result['date'] = db[item].getItem(cuid,'date')
+                    result['time'] = db[item].getItem(cuid,'date')
                     if item != 'admin':
                         result['comment'] = db[item].getItem(cuid,'comment')
                     break

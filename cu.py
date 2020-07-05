@@ -8,6 +8,10 @@ import sqldb
 import tg
 import time
 
+json = tg.json
+ur = tg.ur
+up = tg.up
+
 flaglist = ('op',) #List of available flags for admin
 
 def csprng(checkdup=lambda x: True,maxtrial=5):
@@ -77,17 +81,20 @@ def gbbUser(a,d,g,u):
         a.sendMessage(g,'注意：用戶 '+tg.getNameRep(u['user'])+' 已於剛剛被標記為仿冒用戶。')
 
 def cu(db,item):
-    result = {}
-    if int(item) in botconfig.superAdmin:
-        return {'status':'super'}
-    elif db['admin'].hasItem(str(item)):
-        return {'status':'admin','time':int(db['admin'].getItem(str(item),'date'))}
-    elif db['noir'].hasItem(str(item)):
-        return {'status':'noir','time':int(db['noir'].getItem(str(item),'date')),'comment':db['noir'].getItem(str(item),'comment')}
-    elif db['blanc'].hasItem(str(item)):
-        return {'status':'blanc','time':int(db['blanc'].getItem(str(item),'date')),'comment':db['blanc'].getItem(str(item),'comment')}
-    else:
+    try:
+        result = json.load(ur.urlopen(botconfig.webapi,data = up.urlencode({'met':'cu','format':'json','uid':item}).encode('ASCII')))
+    except Exception as e:
+        print(e)
         return None
+    if result['status'] == 'Unknown':
+        return None
+    else:
+        result.pop('uid')
+        toCode = {'SuperAdmin':'super','Admin':'admin','Fake':'noir','Authentic':'blanc'}
+        result['status'] = toCode[result['status']]
+        if 'time' in result:
+            result['time'] = int(result['time'])
+        return result
 
 def processItem(item,db,api):
     cmdList = ('/ping','/fakeuser','/genuineuser','/authenticuser','/checkuser','/promote','/unlistuser','/cleargroup','/listadmin')
